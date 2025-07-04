@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 import { Company } from '../types';
 import Spinner from '../components/Spinner';
 import { PlusIcon } from '../components/icons/NavIcons';
+import { decimalToDMS } from '../utils/coordinates';
 
 const CompaniesList: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -87,6 +88,7 @@ const CompaniesList: React.FC = () => {
                 <th className="px-6 py-3 font-bold text-ciec-text uppercase tracking-wider">RIF</th>
                 <th className="px-6 py-3 font-bold text-ciec-text uppercase tracking-wider">Municipio</th>
                 <th className="px-6 py-3 font-bold text-ciec-text uppercase tracking-wider">Teléfono</th>
+                <th className="px-6 py-3 font-bold text-ciec-text uppercase tracking-wider">Coordenadas</th>
                 <th className="px-6 py-3 font-bold text-ciec-text uppercase tracking-wider text-center">Acciones</th>
               </tr>
             </thead>
@@ -97,6 +99,12 @@ const CompaniesList: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-ciec-dark-gray">{company.rif || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-ciec-dark-gray">{company.municipios?.nombre_municipio || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-ciec-dark-gray">{company.telefono || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-ciec-dark-gray text-xs">
+                    {company.latitude && company.longitude 
+                      ? `${decimalToDMS(company.latitude, true)} ${decimalToDMS(company.longitude, false)}`
+                      : 'N/A'
+                    }
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center space-x-2">
                     <Link to={`/company/edit/${company.code}`} className="text-ciec-blue hover:text-ciec-gold font-medium">Editar</Link>
                     <button onClick={() => handleDelete(company.code)} className="text-red-600 hover:text-red-800 font-medium">Eliminar</button>
