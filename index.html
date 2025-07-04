@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapa Industrial CIEC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'ciec-blue': '#003366',
+              'ciec-gold': '#d4a017',
+              'ciec-light-gray': '#f0f2f5',
+              'ciec-gray': '#e4e6eb',
+              'ciec-dark-gray': '#8a8d93',
+              'ciec-text': '#1c1e21',
+            },
+          },
+        },
+      }
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.50.2",
+    "@vis.gl/react-google-maps": "https://esm.sh/@vis.gl/react-google-maps@^1.5.3",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.3",
+    "recharts": "https://esm.sh/recharts@^3.0.2",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/"
+  }
+}
+</script>
+  </head>
+  <body class="bg-ciec-light-gray">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
