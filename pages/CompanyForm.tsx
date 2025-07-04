@@ -168,7 +168,7 @@ const CompanyForm: React.FC = () => {
         </div>
     );
     
-    const renderSelect = <T extends {id: string | number}>(name: keyof FormData, label: string, options: T[], optionKey: keyof T, optionValue: keyof T) => (
+    const renderSelect = <T extends {id: string | number}>(name: keyof FormData, label: string, options: T[], optionValue: keyof T) => (
         <div>
              <label htmlFor={name} className="block text-sm font-medium text-ciec-dark-gray">{label}</label>
              <select
@@ -203,10 +203,10 @@ const CompanyForm: React.FC = () => {
                 {renderInput('telefono2', 'Teléfono 2')}
                 {renderInput('direccion_fiscal', 'Dirección Fiscal')}
                 {renderInput('direccion_establecimiento', 'Dirección Establecimiento')}
-                {renderSelect('estado_id', 'Estado', estados, 'id', 'nombre_estado')}
-                {renderSelect('municipio_id', 'Municipio', municipios.filter(m => m.estado_id === Number(formData.estado_id)), 'id', 'nombre_municipio')}
-                {renderSelect('parroquia_id', 'Parroquia', parroquias.filter(p => p.municipio_id === Number(formData.municipio_id)), 'id', 'nombre_parroquia')}
-                {renderSelect('urbanizacion_id', 'Urbanización', urbanizaciones.filter(u => u.parroquia_id === Number(formData.parroquia_id)), 'id', 'nombre_urbanizacion')}
+                {renderSelect('estado_id', 'Estado', estados, 'nombre_estado')}
+                {renderSelect('municipio_id', 'Municipio', municipios.filter(m => m.estado_id === Number(formData.estado_id)), 'nombre_municipio')}
+                {renderSelect('parroquia_id', 'Parroquia', parroquias.filter(p => p.municipio_id === Number(formData.municipio_id)), 'nombre_parroquia')}
+                {renderSelect('urbanizacion_id', 'Urbanización', urbanizaciones.filter(u => u.parroquia_id === Number(formData.parroquia_id)), 'nombre_urbanizacion')}
                 <div className="md:col-span-2">
                     <label htmlFor="coordinates" className="block text-sm font-medium text-ciec-dark-gray">
                         Coordenadas (Formato: 10°09'52.8"N 67°57'49.9"W)
@@ -248,8 +248,8 @@ const CompanyForm: React.FC = () => {
                         className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ciec-blue focus:border-ciec-blue sm:text-sm"
                     />
                 </div>
-                {renderSelect('afiliacion_id', 'Afiliada a', afiliaciones, 'id', 'nombre_afiliacion')}
-                {renderSelect('class_caev_id', 'Clasificación CAEV', caevClasses, 'id', 'descripcion_class')}
+                {renderSelect('afiliacion_id', 'Afiliada a', afiliaciones, 'nombre_afiliacion')}
+                {renderSelect('class_caev_id', 'Clasificación CAEV', caevClasses, 'descripcion_class')}
                 {renderInput('productos_y_marcas', 'Productos y Marcas')}
                 {renderInput('obreros', 'Nº de Obreros', 'number')}
                 {renderInput('empleados', 'Nº de Empleados', 'number')}
