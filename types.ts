@@ -72,6 +72,17 @@ export interface ClassCaev {
     div_caev_id: string;
 }
 
+export interface CaevDivision {
+    id: string;
+    descripcion: string;
+    grupo_caev_id: string;
+}
+
+export interface CaevGrupo {
+    id: string;
+    descripcion: string;
+}
+
 export interface EstadoComision {
     id: number;
     nombre_estado: string;
