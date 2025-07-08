@@ -1,3 +1,4 @@
+
 // This Database type is generated from the Supabase schema.
 // For this project, it's manually created based on the provided SQL script.
 export type Json =
@@ -264,3 +265,32 @@ export type InstitucionUpdate = Database['public']['Tables']['instituciones']['U
 export type Integrante = Database['public']['Tables']['integrantes']['Row'];
 
 export type Page = 'Mapa' | 'Empresas' | 'Gremios' | 'Integrantes' | 'Reportes' | 'Gráficos' | 'Información' | 'Chat' | 'Configuración';
+
+// New Types for Draft Context
+export type EmpresaDraft = {
+  formData: Partial<EmpresaInsert>;
+  telefonos: string[];
+  logoFile: File | null;
+  logoPreview: string | null;
+}
+
+export type DraftContextType = {
+  draft: EmpresaDraft;
+  isDrawerOpen: boolean;
+  isBubbleVisible: boolean;
+  isDirty: boolean;
+  isDraggingBubble: boolean;
+  isSubmitting: boolean;
+  isConfirmDiscardModalOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  updateDraft: (updates: Partial<EmpresaInsert>) => void;
+  setTelefonos: (telefonos: string[]) => void;
+  setLogo: (file: File | null, preview: string | null) => void;
+  saveDraft: () => Promise<{ success: boolean; error?: string }>;
+  discardDraft: () => void;
+  showBubble: () => void;
+  setIsDraggingBubble: (isDragging: boolean) => void;
+  handleConfirmDiscard: () => void;
+  handleCancelDiscard: () => void;
+};

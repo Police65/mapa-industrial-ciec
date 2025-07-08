@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
@@ -12,13 +13,19 @@ import EmpresaForm from './pages/EmpresaForm';
 import GremioForm from './pages/GremioForm';
 import IntegranteForm from './pages/IntegranteForm';
 import { Page } from './types';
+import { DraftProvider, useDraft } from './contexts/DraftContext';
+import EmpresaFormDrawer from './components/empresa/EmpresaFormDrawer';
+import FloatingDraftBubble from './components/empresa/FloatingDraftBubble';
+import DiscardArea from './components/ui/DiscardArea';
+import ConfirmDiscardModal from './components/ui/ConfirmDiscardModal';
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<Page>('Mapa');
+    const { isDraggingBubble } = useDraft();
 
     return (
-        <HashRouter>
+        <>
             <div className="flex h-screen bg-ciec-bg text-ciec-text-primary">
                 <Sidebar setCurrentPage={setCurrentPage} />
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -40,6 +47,20 @@ const App: React.FC = () => {
                     </main>
                 </div>
             </div>
+            <EmpresaFormDrawer />
+            <FloatingDraftBubble />
+            <DiscardArea isVisible={isDraggingBubble} />
+            <ConfirmDiscardModal />
+        </>
+    );
+}
+
+const App: React.FC = () => {
+    return (
+        <HashRouter>
+            <DraftProvider>
+                <AppContent />
+            </DraftProvider>
         </HashRouter>
     );
 };

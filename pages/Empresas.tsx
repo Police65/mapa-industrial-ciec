@@ -1,16 +1,18 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Empresa, Afiliacion } from '../types';
 import Spinner from '../components/ui/Spinner';
-import { Building, AlertTriangle } from 'lucide-react';
-import EmpresaFormDrawer from '../components/empresa/EmpresaFormDrawer';
+import { Building, AlertTriangle, Plus } from 'lucide-react';
+import { useDraft } from '../contexts/DraftContext';
 
 const Empresas: React.FC = () => {
     const [empresas, setEmpresas] = useState<Empresa[]>([]);
     const [afiliaciones, setAfiliaciones] = useState<Afiliacion[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAfiliacion, setSelectedAfiliacion] = useState<string>('All');
+    const { openDrawer } = useDraft();
     
     useEffect(() => {
         const fetchData = async () => {
@@ -26,6 +28,7 @@ const Empresas: React.FC = () => {
 
             setLoading(false);
         };
+        
         fetchData();
 
         const channel = supabase.channel('empresas-changes')
@@ -62,7 +65,6 @@ const Empresas: React.FC = () => {
 
     return (
         <div className="flex h-full relative">
-            <EmpresaFormDrawer />
             <div className="w-1/4 max-w-xs bg-ciec-card p-4 rounded-l-lg overflow-y-auto">
                 <h2 className="text-lg font-semibold mb-4">Gremios</h2>
                 <ul>
@@ -91,11 +93,14 @@ const Empresas: React.FC = () => {
                     ))}
                 </ul>
             </div>
-            <div className="flex-1 bg-ciec-bg rounded-r-lg p-4">
-                <div className="flex justify-between items-center mb-4">
+            <div className="flex-1 bg-ciec-bg rounded-r-lg p-4 flex flex-col">
+                <div className="flex justify-between items-center mb-4 flex-shrink-0">
                     <h2 className="text-lg font-semibold">{afiliaciones.find(a => a.id === selectedAfiliacion)?.nombre_afiliacion || selectedAfiliacion} <span className="text-sm font-normal text-ciec-text-secondary">{filteredEmpresas.length}</span></h2>
+                     <button onClick={openDrawer} className="flex items-center bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <Plus className="w-5 h-5 mr-2" /> Añadir Empresa
+                    </button>
                 </div>
-                <div className="overflow-y-auto h-[calc(100%-2rem)] pr-2">
+                <div className="overflow-y-auto flex-grow pr-2">
                     {filteredEmpresas.map(empresa => (
                          <Link to={`/empresas/editar/${empresa.code}`} key={empresa.code} className="block mb-3">
                             <div className="bg-ciec-card p-4 rounded-lg hover:ring-2 hover:ring-ciec-blue transition-all duration-200 flex items-center space-x-4">
