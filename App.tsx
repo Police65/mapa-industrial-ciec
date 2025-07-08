@@ -22,7 +22,7 @@ import ConfirmDiscardModal from './components/ui/ConfirmDiscardModal';
 
 const AppContent: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<Page>('Mapa');
-    const { isDraggingBubble } = useDraft();
+    const { isDraggingBubble, isDirty } = useDraft();
 
     return (
         <>
@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
             </div>
             <EmpresaFormDrawer />
             <FloatingDraftBubble />
-            <DiscardArea isVisible={isDraggingBubble} />
+            <DiscardArea isVisible={isDraggingBubble && isDirty} />
             <ConfirmDiscardModal />
         </>
     );
