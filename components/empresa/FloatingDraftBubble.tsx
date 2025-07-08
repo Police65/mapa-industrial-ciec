@@ -1,10 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquarePlus } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { MessageSquarePlus, Building2 } from 'lucide-react';
 import { useDraft } from '../../contexts/DraftContext';
 
 const FloatingDraftBubble: React.FC = () => {
-    const { isBubbleVisible, openDrawer, discardDraft, setIsDraggingBubble } = useDraft();
+    const { isDrawerOpen, isDirty, openDrawer, discardDraft, setIsDraggingBubble } = useDraft();
+    const location = useLocation();
     const bubbleRef = useRef<HTMLButtonElement>(null);
     const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight / 2 - 32 });
     const [isDragging, setIsDragging] = useState(false);
@@ -106,7 +108,11 @@ const FloatingDraftBubble: React.FC = () => {
         }
     };
 
-    if (!isBubbleVisible) return null;
+    // VIBILITY LOGIC:
+    // Show if the drawer is closed AND (we are on the Empresas page OR a draft is in progress)
+    const isVisible = !isDrawerOpen && (location.pathname === '/empresas' || isDirty);
+
+    if (!isVisible) return null;
 
     return (
         <button
@@ -121,9 +127,13 @@ const FloatingDraftBubble: React.FC = () => {
                 transform: `scale(${isDragging ? 1.1 : 1})`,
                 transition: isDragging ? 'transform 0.1s ease' : 'transform 0.2s ease, left 0.3s ease, top 0.3s ease'
             }}
-            title="Abrir borrador de empresa"
+            title={isDirty ? "Abrir borrador de empresa" : "Añadir nueva empresa"}
         >
-            <MessageSquarePlus size={28} />
+            {isDirty ? (
+                <MessageSquarePlus size={28} />
+            ) : (
+                <Building2 size={28} />
+            )}
         </button>
     );
 };
