@@ -131,6 +131,7 @@ const EmpresaFormDrawer: React.FC = () => {
     const handleConfirmDiscard = () => {
         setCancelModalOpen(false);
         resetForm();
+        setIsMinimized(true);
     };
 
     const handleSubmit = async () => {
