@@ -1,7 +1,8 @@
 import React from 'react';
 import { Plus, Minus, UploadCloud, X } from 'lucide-react';
+import { GOOGLE_MAPS_API_KEY } from '../../constants';
 
-const InputField: React.FC<{ label: string; name: string; value?: string | number | null; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; readOnly?: boolean; pattern?: string; title?: string; as?: 'textarea' }> = ({ label, name, as, ...props }) => (
+const InputField: React.FC<{ label: string; name: string; value?: string | number | null; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; readOnly?: boolean; pattern?: string; title?: string; as?: 'textarea', placeholder?: string, onPaste?: (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void; }> = ({ label, name, as, ...props }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-ciec-text-secondary mb-1">{label}{props.required && '*'}</label>
         {as === 'textarea' ? (
@@ -35,6 +36,7 @@ interface EmpresaFormFieldsProps {
     isEditing: boolean;
     formData: any;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+    handleCoordinatesPaste: (lat: number, lon: number) => void;
     
     telefonos: string[];
     handleTelefonoChange: (index: number, value: string) => void;
@@ -67,6 +69,7 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
     isEditing,
     formData,
     handleChange,
+    handleCoordinatesPaste,
     telefonos,
     handleTelefonoChange,
     handleAddTelefono,
@@ -77,6 +80,23 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
     dropdowns,
     filteredDropdowns
 }) => {
+    const onPasteCoordinates = (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        e.preventDefault();
+        const text = e.clipboardData.getData('text');
+        const parts = text.split(/[,;]/).map(part => part.trim());
+        if (parts.length === 2) {
+            const lat = parseFloat(parts[0]);
+            const lon = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                handleCoordinatesPaste(lat, lon);
+            } else {
+                alert('Coordenadas no válidas. El formato debe ser "latitud, longitud".');
+            }
+        } else {
+            alert('Formato de coordenadas no válido. Pegue las coordenadas copiadas de Google Maps.');
+        }
+    };
+
     return (
         <>
             <Fieldset legend="Datos de Identificación">
@@ -117,14 +137,36 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
             </Fieldset>
 
             <Fieldset legend="Ubicación Geográfica">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SelectField label="Estado" name="estado_id" value={formData.estado_id} onChange={handleChange} options={dropdowns.estados.map(e => ({id: e.id, name: e.nombre_estado}))} />
                     <SelectField label="Municipio" name="municipio_id" value={formData.municipio_id} onChange={handleChange} options={filteredDropdowns.filteredMunicipios.map(m => ({id: m.id, name: m.nombre_municipio}))} disabled={!formData.estado_id} />
                     <SelectField label="Parroquia" name="parroquia_id" value={formData.parroquia_id} onChange={handleChange} options={filteredDropdowns.filteredParroquias.map(p => ({id: p.id, name: p.nombre_parroquia}))} disabled={!formData.municipio_id} />
                     <InputField label="Dirección Fiscal" name="direccion_fiscal" value={formData.direccion_fiscal} onChange={handleChange} as="textarea" />
                     <InputField label="Dirección Establecimiento" name="direccion_establecimiento" value={formData.direccion_establecimiento} onChange={handleChange} as="textarea" />
-                    <InputField label="Latitud" name="latitude" type="number" value={formData.latitude} onChange={handleChange} />
-                    <InputField label="Longitud" name="longitude" type="number" value={formData.longitude} onChange={handleChange} />
+                    <div className="md:col-span-2">
+                         <InputField 
+                            label="Coordenadas"
+                            name="coordinates"
+                            value={(formData.latitude && formData.longitude) ? `${formData.latitude}, ${formData.longitude}` : ''}
+                            onChange={() => {}} // Block manual typing, value is derived
+                            onPaste={onPasteCoordinates}
+                            placeholder="Pegar coordenadas de Google Maps aquí"
+                            title="Copie y pegue las coordenadas desde Google Maps (ej: 10.123, -68.456)"
+                        />
+                        {formData.latitude && formData.longitude && (
+                            <div className="mt-4 h-64 rounded-lg overflow-hidden border border-ciec-border">
+                                <iframe
+                                    title="map-preview"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
+                                    src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${formData.latitude},${formData.longitude}`}>
+                                </iframe>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Fieldset>
             

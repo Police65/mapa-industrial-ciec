@@ -77,6 +77,10 @@ const EmpresaForm: React.FC = () => {
             return newState;
         });
     };
+    
+    const handleCoordinatesPaste = (lat: number, lon: number) => {
+        setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
+    };
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -122,7 +126,10 @@ const EmpresaForm: React.FC = () => {
             }
             const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(uploadData.path);
             dataToSave.logo_url = publicUrl;
+        } else if (logoPreview === null) {
+            dataToSave.logo_url = null;
         }
+
 
         const { error: submitError } = await supabase.from('empresas').update(dataToSave).eq('code', code!);
 
@@ -150,6 +157,7 @@ const EmpresaForm: React.FC = () => {
                 isEditing={isEditing}
                 formData={formData}
                 handleChange={handleChange}
+                handleCoordinatesPaste={handleCoordinatesPaste}
                 telefonos={telefonos}
                 handleTelefonoChange={handleTelefonoChange}
                 handleAddTelefono={handleAddTelefono}

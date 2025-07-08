@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { EmpresaInsert, Estado, Municipio, Parroquia, Afiliacion, SecCaev, DivCaev, ClassCaev } from '../../types';
 import Spinner from '../ui/Spinner';
+import Modal from '../ui/Modal';
 import EmpresaFormFields from './EmpresaFormFields';
 import { Plus, ChevronLeft, Save, X } from 'lucide-react';
 
@@ -12,6 +13,7 @@ const INITIAL_STATE: Partial<EmpresaInsert> = {
 
 const EmpresaFormDrawer: React.FC = () => {
     const [isMinimized, setIsMinimized] = useState(true);
+    const [isCancelModalOpen, setCancelModalOpen] = useState(false);
     const [formData, setFormData] = useState<Partial<EmpresaInsert>>(INITIAL_STATE);
     const [telefonos, setTelefonos] = useState<string[]>(['']);
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -52,6 +54,23 @@ const EmpresaFormDrawer: React.FC = () => {
        fetchDropdownData();
     }, [])
 
+    const isDirty = useMemo(() => {
+        if (logoFile) return true;
+        if (telefonos.length > 1 || (telefonos.length > 0 && telefonos[0] !== '')) return true;
+        
+        const keys = new Set([...Object.keys(INITIAL_STATE), ...Object.keys(formData)]);
+        for (const key of keys) {
+            const initialValue = (INITIAL_STATE as any)[key] ?? '';
+            const currentValue = (formData as any)[key] ?? '';
+            // Treat null/undefined/empty string as the same for dirty check purposes
+            if (initialValue !== currentValue && !(initialValue === '' && currentValue == null) && !(initialValue == null && currentValue === '')) {
+                return true;
+            }
+        }
+        return false;
+    }, [formData, telefonos, logoFile]);
+    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         let processedValue: string | number | null = value;
@@ -65,6 +84,10 @@ const EmpresaFormDrawer: React.FC = () => {
             if (name === 'div_caev_id') newState.class_caev_id = null;
             return newState;
         });
+    };
+    
+    const handleCoordinatesPaste = (lat: number, lon: number) => {
+        setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
     };
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,10 +117,25 @@ const EmpresaFormDrawer: React.FC = () => {
         setLogoPreview(null);
         setError(null);
     }
+    
+    const handleMinimizeDrawer = () => {
+        setIsMinimized(true);
+    };
+    
+    const handleCancelClick = () => {
+        if (isDirty) {
+            setCancelModalOpen(true);
+        }
+    };
+
+    const handleConfirmDiscard = () => {
+        setCancelModalOpen(false);
+        resetForm();
+    };
 
     const handleSubmit = async () => {
         if (!formData.razon_social || !formData.code) {
-            alert('Código y Razón Social son obligatorios.');
+            setError('Código y Razón Social son obligatorios.');
             return;
         }
         setSubmitting(true);
@@ -116,7 +154,7 @@ const EmpresaFormDrawer: React.FC = () => {
             const fileName = `${formData.code}-${Date.now()}`;
             const { data: uploadData, error: uploadError } = await supabase.storage.from('logos').upload(fileName, logoFile);
             if (uploadError) {
-                setError(`Error uploading logo: ${uploadError.message}`);
+                setError(`Error al subir el logo: ${uploadError.message}`);
                 setSubmitting(false);
                 return;
             }
@@ -144,18 +182,38 @@ const EmpresaFormDrawer: React.FC = () => {
     
     return (
         <>
+            <Modal
+                isOpen={isCancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                title="¿Descartar Cambios?"
+            >
+                <p className="text-ciec-text-secondary">
+                    Si cancelas, se perderá toda la información que has introducido. ¿Estás seguro de que quieres continuar?
+                </p>
+                <div className="mt-6 flex justify-end space-x-4">
+                    <button onClick={() => setCancelModalOpen(false)} className="bg-ciec-border text-ciec-text-primary font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                        Seguir Editando
+                    </button>
+                    <button onClick={handleConfirmDiscard} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                        Descartar Cambios
+                    </button>
+                </div>
+            </Modal>
             <div className={`${drawerClasses} ${isMinimized ? 'translate-x-full' : 'translate-x-0 w-full max-w-3xl'}`}>
                 {/* Sticky Header */}
-                <header className="flex-shrink-0 bg-ciec-bg p-4 flex justify-between items-center border-b border-ciec-border sticky top-0">
+                <header className="flex-shrink-0 bg-ciec-bg p-4 flex justify-between items-center border-b border-ciec-border sticky top-0 z-10">
                     <h2 className="text-xl font-bold">Añadir Nueva Empresa</h2>
                     <div className="flex items-center space-x-2">
-                        <button onClick={() => setIsMinimized(true)} className="bg-ciec-border text-ciec-text-primary font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        <button 
+                            onClick={handleCancelClick} 
+                            disabled={!isDirty}
+                            className="bg-ciec-border text-ciec-text-primary font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             Cancelar
                         </button>
                         <button onClick={handleSubmit} disabled={submitting || loading} className="bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-500 transition-colors flex items-center">
                             {submitting ? <Spinner size="sm" color="border-white" /> : <><Save className="w-5 h-5 mr-2" /> Crear Empresa</>}
                         </button>
-                         <button onClick={() => setIsMinimized(true)} className="p-2 rounded-full text-ciec-text-secondary hover:bg-ciec-border">
+                         <button onClick={handleMinimizeDrawer} className="p-2 rounded-full text-ciec-text-secondary hover:bg-ciec-border">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -170,6 +228,7 @@ const EmpresaFormDrawer: React.FC = () => {
                                 isEditing={false}
                                 formData={formData}
                                 handleChange={handleChange}
+                                handleCoordinatesPaste={handleCoordinatesPaste}
                                 telefonos={telefonos}
                                 handleTelefonoChange={handleTelefonoChange}
                                 handleAddTelefono={handleAddTelefono}
@@ -201,7 +260,7 @@ const EmpresaFormDrawer: React.FC = () => {
             {/* Minimized Tab */}
             <button 
                 onClick={() => setIsMinimized(false)}
-                className={`fixed right-0 top-1/2 -translate-y-1/2 bg-ciec-blue hover:bg-ciec-blue-hover text-white p-3 rounded-l-lg shadow-lg z-30 transition-transform duration-300 ease-in-out ${!isMinimized ? '-translate-x-8' : 'translate-x-0'}`}
+                className={`fixed right-0 top-1/2 -translate-y-1/2 bg-ciec-blue hover:bg-ciec-blue-hover text-white p-3 rounded-l-lg shadow-lg z-30 transition-transform duration-300 ease-in-out ${!isMinimized ? 'translate-x-full' : 'translate-x-0'}`}
                 aria-label="Añadir Empresa"
                 title="Añadir Empresa"
             >
@@ -209,7 +268,7 @@ const EmpresaFormDrawer: React.FC = () => {
             </button>
 
             {/* Overlay */}
-            {!isMinimized && <div onClick={() => setIsMinimized(true)} className="fixed inset-0 bg-black/50 z-20 transition-opacity duration-300"></div>}
+            {!isMinimized && <div onClick={handleMinimizeDrawer} className="fixed inset-0 bg-black/50 z-20 transition-opacity duration-300"></div>}
         </>
     );
 };
