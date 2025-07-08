@@ -1,65 +1,47 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { APIProvider } from '@vis.gl/react-google-maps';
+import React, { useState } from 'react';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
+import Mapa from './pages/Mapa';
+import Empresas from './pages/Empresas';
+import Gremios from './pages/Gremios';
+import Graficos from './pages/Graficos';
+import Reportes from './pages/Reportes';
+import Integrantes from './pages/Integrantes';
+import EmpresaForm from './pages/EmpresaForm';
+import GremioForm from './pages/GremioForm';
+import IntegranteForm from './pages/IntegranteForm';
+import { Page } from './types';
 
-import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import CompaniesList from './pages/CompaniesList';
-import CompanyForm from './pages/CompanyForm';
-import MapView from './pages/MapView';
-import AdminLayout from './pages/admin/AdminLayout';
-import GenericCrudPage from './pages/admin/GenericCrudPage';
-import NotFound from './pages/NotFound';
-import { 
-  estadosConfig,
-  municipiosConfig,
-  parroquiasConfig,
-  urbanizacionesConfig,
-  afiliacionesConfig,
-  estadosComisionConfig,
-  comisionesConfig,
-  integrantesConfig
-} from './pages/admin/adminConfigs';
-
-const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex h-screen bg-ciec-light-gray">
-    <Sidebar />
-    <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-      {children}
-    </main>
-  </div>
-);
 
 const App: React.FC = () => {
-  // In a real app, the API key would be in an environment variable
-  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const [currentPage, setCurrentPage] = useState<Page>('Mapa');
 
-  return (
-    <APIProvider apiKey={googleMapsApiKey}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
-          <Route path="/companies" element={<AppLayout><CompaniesList /></AppLayout>} />
-          <Route path="/company/new" element={<AppLayout><CompanyForm /></AppLayout>} />
-          <Route path="/company/edit/:code" element={<AppLayout><CompanyForm /></AppLayout>} />
-          <Route path="/map" element={<AppLayout><MapView /></AppLayout>} />
-          <Route path="/admin" element={<AppLayout><AdminLayout /></AppLayout>}>
-            <Route index element={<Navigate to="estados" replace />} />
-            <Route path="estados" element={<GenericCrudPage config={estadosConfig} />} />
-            <Route path="municipios" element={<GenericCrudPage config={municipiosConfig} />} />
-            <Route path="parroquias" element={<GenericCrudPage config={parroquiasConfig} />} />
-            <Route path="urbanizaciones" element={<GenericCrudPage config={urbanizacionesConfig} />} />
-            <Route path="afiliaciones" element={<GenericCrudPage config={afiliacionesConfig} />} />
-            <Route path="estados-comision" element={<GenericCrudPage config={estadosComisionConfig} />} />
-            <Route path="comisiones" element={<GenericCrudPage config={comisionesConfig} />} />
-            <Route path="integrantes" element={<GenericCrudPage config={integrantesConfig} />} />
-          </Route>
-          <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
-        </Routes>
-      </BrowserRouter>
-    </APIProvider>
-  );
+    return (
+        <HashRouter>
+            <div className="flex h-screen bg-ciec-bg text-ciec-text-primary">
+                <Sidebar setCurrentPage={setCurrentPage} />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <Header currentPage={currentPage} />
+                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-ciec-bg p-4 md:p-6 lg:p-8">
+                        <Routes>
+                            <Route path="/" element={<Navigate to="/mapa" />} />
+                            <Route path="/mapa" element={<Mapa />} />
+                            <Route path="/empresas" element={<Empresas />} />
+                            <Route path="/empresas/editar/:code" element={<EmpresaForm />} />
+                            <Route path="/gremios" element={<Gremios />} />
+                            <Route path="/gremios/nuevo" element={<GremioForm />} />
+                            <Route path="/integrantes" element={<Integrantes />} />
+                            <Route path="/integrantes/nuevo" element={<IntegranteForm />} />
+                            <Route path="/reportes" element={<Reportes />} />
+                            <Route path="/graficos" element={<Graficos />} />
+                            {/* Add other routes for settings, info, etc. */}
+                        </Routes>
+                    </main>
+                </div>
+            </div>
+        </HashRouter>
+    );
 };
 
 export default App;
