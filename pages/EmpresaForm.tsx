@@ -78,7 +78,7 @@ const EmpresaForm: React.FC = () => {
         });
     };
     
-    const handleCoordinatesPaste = (lat: number, lon: number) => {
+    const handleCoordinatesPaste = (lat: number | null, lon: number | null) => {
         setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
     };
 

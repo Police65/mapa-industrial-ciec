@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { LoadScript } from '@react-google-maps/api';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Mapa from './pages/Mapa';
@@ -18,6 +19,7 @@ import EmpresaFormDrawer from './components/empresa/EmpresaFormDrawer';
 import FloatingDraftBubble from './components/empresa/FloatingDraftBubble';
 import DiscardArea from './components/ui/DiscardArea';
 import ConfirmDiscardModal from './components/ui/ConfirmDiscardModal';
+import { GOOGLE_MAPS_API_KEY } from './constants';
 
 
 const AppContent: React.FC = () => {
@@ -57,11 +59,13 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
     return (
-        <HashRouter>
-            <DraftProvider>
-                <AppContent />
-            </DraftProvider>
-        </HashRouter>
+        <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+            <HashRouter>
+                <DraftProvider>
+                    <AppContent />
+                </DraftProvider>
+            </HashRouter>
+        </LoadScript>
     );
 };
 

@@ -23,7 +23,6 @@ const isDraftEqual = (a: EmpresaDraft, b: EmpresaDraft) => {
 export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [draft, setDraft] = useState<EmpresaDraft>(INITIAL_DRAFT_STATE);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [isBubbleVisible, setIsBubbleVisible] = useState(false);
     const [isDraggingBubble, setIsDraggingBubble] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConfirmDiscardModalOpen, setConfirmDiscardModalOpen] = useState(false);
@@ -36,8 +35,8 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Effect to handle navigation away from a page with an open, dirty drawer
     useEffect(() => {
         if (isDrawerOpen && isDirty && location.pathname !== originalPath.current) {
-            setIsDrawerOpen(false);
-            setIsBubbleVisible(true);
+            // When navigating away, just close the drawer. The bubble will appear automatically.
+            setIsDrawerOpen(false); 
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname]);
@@ -45,19 +44,11 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const openDrawer = useCallback(() => {
         originalPath.current = location.pathname;
         setIsDrawerOpen(true);
-        setIsBubbleVisible(false);
     }, [location.pathname]);
 
     const closeDrawer = useCallback(() => {
         setIsDrawerOpen(false);
-        if (isDirty) {
-            setIsBubbleVisible(true);
-        }
-    }, [isDirty]);
-
-    const showBubble = useCallback(() => {
-        if(isDirty) setIsBubbleVisible(true);
-    }, [isDirty]);
+    }, []);
 
     const updateDraft = useCallback((updates: Partial<EmpresaInsert>) => {
         setDraft(prev => ({
@@ -78,8 +69,6 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const resetDraft = useCallback(() => {
         setDraft(INITIAL_DRAFT_STATE);
-        setIsDrawerOpen(false);
-        setIsBubbleVisible(false);
         setIsSubmitting(false);
         setConfirmDiscardModalOpen(false);
     }, []);
@@ -92,6 +81,7 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const handleConfirmDiscard = useCallback(() => {
         resetDraft();
+        setIsDrawerOpen(false); // Also close the drawer
     }, [resetDraft]);
 
     const handleCancelDiscard = useCallback(() => {
@@ -131,6 +121,7 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } else {
             alert(`Empresa creada exitosamente.`);
             resetDraft();
+            setIsDrawerOpen(false);
             return { success: true };
         }
     };
@@ -138,7 +129,6 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const value: DraftContextType = {
         draft,
         isDrawerOpen,
-        isBubbleVisible,
         isDirty,
         isDraggingBubble,
         isSubmitting,
@@ -150,7 +140,6 @@ export const DraftProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setLogo,
         saveDraft,
         discardDraft,
-        showBubble,
         setIsDraggingBubble,
         handleConfirmDiscard,
         handleCancelDiscard,

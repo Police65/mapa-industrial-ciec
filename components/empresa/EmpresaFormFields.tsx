@@ -1,6 +1,10 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus, UploadCloud, X } from 'lucide-react';
-import { GOOGLE_MAPS_API_KEY } from '../../constants';
+import { GoogleMap, MarkerF } from '@react-google-maps/api';
+import { darkMapStyle } from '../../styles/mapStyles';
+import Spinner from '../ui/Spinner';
+
 
 const InputField: React.FC<{ label: string; name: string; value?: string | number | null; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; readOnly?: boolean; pattern?: string; title?: string; as?: 'textarea', placeholder?: string, onPaste?: (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void; }> = ({ label, name, as, ...props }) => (
     <div>
@@ -36,7 +40,7 @@ interface EmpresaFormFieldsProps {
     isEditing: boolean;
     formData: any;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-    handleCoordinatesPaste: (lat: number, lon: number) => void;
+    handleCoordinatesPaste: (lat: number | null, lon: number | null) => void;
     
     telefonos: string[];
     handleTelefonoChange: (index: number, value: string) => void;
@@ -80,6 +84,16 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
     dropdowns,
     filteredDropdowns
 }) => {
+    const [localCoords, setLocalCoords] = useState('');
+
+    useEffect(() => {
+        if (formData.latitude != null && formData.longitude != null) {
+            setLocalCoords(`${formData.latitude}, ${formData.longitude}`);
+        } else {
+            setLocalCoords('');
+        }
+    }, [formData.latitude, formData.longitude]);
+    
     const onPasteCoordinates = (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         e.preventDefault();
         const text = e.clipboardData.getData('text');
@@ -94,6 +108,25 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
             }
         } else {
             alert('Formato de coordenadas no válido. Pegue las coordenadas copiadas de Google Maps.');
+        }
+    };
+    
+    const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        setLocalCoords(value); // Update local state immediately for responsiveness.
+
+        if (value.trim() === '') {
+            handleCoordinatesPaste(null, null);
+            return;
+        }
+
+        const parts = value.split(/[,;]/).map(part => part.trim());
+        if (parts.length === 2) {
+            const lat = parseFloat(parts[0]);
+            const lon = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                handleCoordinatesPaste(lat, lon);
+            }
         }
     };
 
@@ -147,23 +180,29 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
                          <InputField 
                             label="Coordenadas"
                             name="coordinates"
-                            value={(formData.latitude && formData.longitude) ? `${formData.latitude}, ${formData.longitude}` : ''}
-                            onChange={() => {}} // Block manual typing, value is derived
+                            value={localCoords}
+                            onChange={handleCoordinatesChange}
                             onPaste={onPasteCoordinates}
-                            placeholder="Pegar coordenadas de Google Maps aquí"
-                            title="Copie y pegue las coordenadas desde Google Maps (ej: 10.123, -68.456)"
+                            placeholder="Pegar o escribir coordenadas (ej: 10.123, -68.456)"
+                            title="Copie y pegue las coordenadas desde Google Maps o escríbalas manualmente"
                         />
                         {formData.latitude && formData.longitude && (
                             <div className="mt-4 h-64 rounded-lg overflow-hidden border border-ciec-border">
-                                <iframe
-                                    title="map-preview"
-                                    width="100%"
-                                    height="100%"
-                                    style={{ border: 0 }}
-                                    loading="lazy"
-                                    allowFullScreen
-                                    src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${formData.latitude},${formData.longitude}`}>
-                                </iframe>
+                                <GoogleMap
+                                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                                    center={{ lat: formData.latitude, lng: formData.longitude }}
+                                    zoom={15}
+                                    options={{
+                                        styles: darkMapStyle,
+                                        mapTypeControl: true,
+                                        zoomControl: true,
+                                        streetViewControl: false,
+                                        fullscreenControl: true,
+                                        clickableIcons: false,
+                                    }}
+                                >
+                                    <MarkerF position={{ lat: formData.latitude, lng: formData.longitude }} />
+                                </GoogleMap>
                             </div>
                         )}
                     </div>

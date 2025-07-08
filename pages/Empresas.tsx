@@ -4,15 +4,13 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Empresa, Afiliacion } from '../types';
 import Spinner from '../components/ui/Spinner';
-import { Building, AlertTriangle, Plus } from 'lucide-react';
-import { useDraft } from '../contexts/DraftContext';
+import { Building, AlertTriangle } from 'lucide-react';
 
 const Empresas: React.FC = () => {
     const [empresas, setEmpresas] = useState<Empresa[]>([]);
     const [afiliaciones, setAfiliaciones] = useState<Afiliacion[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAfiliacion, setSelectedAfiliacion] = useState<string>('All');
-    const { openDrawer } = useDraft();
     
     useEffect(() => {
         const fetchData = async () => {
@@ -96,9 +94,6 @@ const Empresas: React.FC = () => {
             <div className="flex-1 bg-ciec-bg rounded-r-lg p-4 flex flex-col">
                 <div className="flex justify-between items-center mb-4 flex-shrink-0">
                     <h2 className="text-lg font-semibold">{afiliaciones.find(a => a.id === selectedAfiliacion)?.nombre_afiliacion || selectedAfiliacion} <span className="text-sm font-normal text-ciec-text-secondary">{filteredEmpresas.length}</span></h2>
-                     <button onClick={openDrawer} className="flex items-center bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                        <Plus className="w-5 h-5 mr-2" /> Añadir Empresa
-                    </button>
                 </div>
                 <div className="overflow-y-auto flex-grow pr-2">
                     {filteredEmpresas.map(empresa => (

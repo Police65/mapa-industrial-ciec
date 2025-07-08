@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { EmpresaInsert, Estado, Municipio, Parroquia, Afiliacion, SecCaev, DivCaev, ClassCaev } from '../../types';
@@ -72,7 +71,7 @@ const EmpresaFormDrawer: React.FC = () => {
         updateDraft(updates);
     };
     
-    const handleCoordinatesPaste = (lat: number, lon: number) => {
+    const handleCoordinatesPaste = (lat: number | null, lon: number | null) => {
         updateDraft({ latitude: lat, longitude: lon });
     };
 

@@ -277,7 +277,6 @@ export type EmpresaDraft = {
 export type DraftContextType = {
   draft: EmpresaDraft;
   isDrawerOpen: boolean;
-  isBubbleVisible: boolean;
   isDirty: boolean;
   isDraggingBubble: boolean;
   isSubmitting: boolean;
@@ -289,7 +288,6 @@ export type DraftContextType = {
   setLogo: (file: File | null, preview: string | null) => void;
   saveDraft: () => Promise<{ success: boolean; error?: string }>;
   discardDraft: () => void;
-  showBubble: () => void;
   setIsDraggingBubble: (isDragging: boolean) => void;
   handleConfirmDiscard: () => void;
   handleCancelDiscard: () => void;
