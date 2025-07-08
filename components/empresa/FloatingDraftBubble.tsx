@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { MessageSquarePlus, Building2 } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { useDraft } from '../../contexts/DraftContext';
 
 const FloatingDraftBubble: React.FC = () => {
@@ -113,6 +113,11 @@ const FloatingDraftBubble: React.FC = () => {
     const isVisible = !isDrawerOpen && (location.pathname === '/empresas' || isDirty);
 
     if (!isVisible) return null;
+    
+    const bubbleClasses = `fixed w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg z-50 cursor-grab active:cursor-grabbing ${
+        isDirty ? 'bg-ciec-gold' : 'bg-ciec-blue'
+    }`;
+
 
     return (
         <button
@@ -120,7 +125,7 @@ const FloatingDraftBubble: React.FC = () => {
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
             onClick={handleClick}
-            className="fixed w-16 h-16 bg-ciec-gold rounded-full flex items-center justify-center text-ciec-bg shadow-lg z-50 cursor-grab active:cursor-grabbing"
+            className={bubbleClasses}
             style={{ 
                 left: `${position.x}px`, 
                 top: `${position.y}px`,
@@ -129,11 +134,7 @@ const FloatingDraftBubble: React.FC = () => {
             }}
             title={isDirty ? "Abrir borrador de empresa" : "Añadir nueva empresa"}
         >
-            {isDirty ? (
-                <MessageSquarePlus size={28} />
-            ) : (
-                <Building2 size={28} />
-            )}
+            <Building2 size={28} />
         </button>
     );
 };
