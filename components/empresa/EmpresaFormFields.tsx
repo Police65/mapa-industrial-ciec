@@ -1,10 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Minus, UploadCloud, X } from 'lucide-react';
 import { GoogleMap, MarkerF } from '@react-google-maps/api';
 import { darkMapStyle } from '../../styles/mapStyles';
-import Spinner from '../ui/Spinner';
-
 
 const InputField: React.FC<{ label: string; name: string; value?: string | number | null; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; readOnly?: boolean; pattern?: string; title?: string; as?: 'textarea', placeholder?: string, onPaste?: (e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void; }> = ({ label, name, as, ...props }) => (
     <div>
@@ -35,6 +32,109 @@ const Fieldset: React.FC<{legend: string; children: React.ReactNode}> = ({ legen
         <div className="mt-4">{children}</div>
     </fieldset>
 );
+
+// --- TelefonoInput component ---
+const phonePrefixes = [
+    '0414', '0412', '0416', '0424', '0426', 
+    '0212', '0241', '0242', '0245', '0249'
+];
+
+interface TelefonoInputProps {
+    value: string;
+    onChange: (value: string) => void;
+}
+
+const TelefonoInput: React.FC<TelefonoInputProps> = ({ value, onChange }) => {
+    const [prefix, setPrefix] = useState('0414');
+    const [number, setNumber] = useState('');
+
+    // This effect syncs the component's internal state FROM the parent's `value` prop.
+    // It runs ONLY when the `value` prop changes.
+    useEffect(() => {
+        const fullNumber = (value || '').replace(/[^0-9]/g, '');
+        let foundPrefix = '0414';
+        let restOfNumber = fullNumber;
+        
+        if (fullNumber) {
+            const sortedPrefixes = [...phonePrefixes].sort((a,b) => b.length - a.length);
+            for (const p of sortedPrefixes) {
+                if (fullNumber.startsWith(p)) {
+                    foundPrefix = p;
+                    restOfNumber = fullNumber.substring(p.length);
+                    break;
+                }
+            }
+        } else {
+            // If the prop value is empty, we ensure the number is also empty.
+            restOfNumber = '';
+        }
+        
+        setPrefix(foundPrefix);
+        setNumber(restOfNumber);
+    }, [value]);
+
+    // This function handles changes from the inputs and calls the parent's onChange.
+    const triggerChange = (newPrefix: string, newNumber: string) => {
+        const cleanNumber = newNumber.replace(/[^0-9]/g, '');
+        
+        // Update local state for immediate UI feedback.
+        setPrefix(newPrefix);
+        setNumber(cleanNumber);
+
+        // Calculate the new full value and notify the parent.
+        const newFullValue = cleanNumber ? `${newPrefix}${cleanNumber}` : '';
+        
+        // This check is crucial to prevent loops if the parent component re-renders.
+        if (newFullValue !== value) {
+            onChange(newFullValue);
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        let pasteData = e.clipboardData.getData('text').trim();
+        if (pasteData.startsWith('+58')) {
+            pasteData = '0' + pasteData.substring(3);
+        }
+        const digits = pasteData.replace(/[^0-9]/g, '');
+
+        let newPrefix = '0414';
+        let newNumber = digits;
+
+        const sortedPrefixes = [...phonePrefixes].sort((a, b) => b.length - a.length);
+        for (const p of sortedPrefixes) {
+            if (digits.startsWith(p)) {
+                newPrefix = p;
+                newNumber = digits.substring(p.length);
+                break;
+            }
+        }
+        
+        triggerChange(newPrefix, newNumber);
+    };
+
+    return (
+        <div className="flex w-full items-center gap-2">
+            <select
+                value={prefix}
+                onChange={(e) => triggerChange(e.target.value, number)}
+                className="bg-ciec-bg border border-ciec-border rounded-lg px-3 py-2 text-ciec-text-primary focus:ring-2 focus:ring-ciec-blue focus:outline-none"
+            >
+                {phonePrefixes.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <input
+                type="tel"
+                value={number}
+                onChange={(e) => triggerChange(prefix, e.target.value)}
+                onPaste={handlePaste}
+                className="w-full bg-ciec-bg border border-ciec-border rounded-lg px-3 py-2 text-ciec-text-primary focus:ring-2 focus:ring-ciec-blue focus:outline-none"
+                placeholder="Número"
+                pattern="[0-9]*"
+            />
+        </div>
+    );
+};
+
 
 interface EmpresaFormFieldsProps {
     isEditing: boolean;
@@ -85,7 +185,52 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
     filteredDropdowns
 }) => {
     const [localCoords, setLocalCoords] = useState('');
+    const rifPrefixes = ['J', 'V', 'E', 'G', 'P'];
+    const [rifPrefix, setRifPrefix] = useState('J');
+    const [rifNumber, setRifNumber] = useState('');
 
+    // --- RIF LOGIC ---
+    useEffect(() => {
+        const rif = formData.rif || '';
+        if (!rif) {
+            setRifPrefix('J');
+            setRifNumber('');
+            return;
+        }
+
+        const firstChar = rif.charAt(0).toUpperCase();
+        if (rifPrefixes.includes(firstChar)) {
+            setRifPrefix(firstChar);
+            setRifNumber(rif.substring(1).replace(/[^0-9]/g, ''));
+        } else {
+            setRifPrefix('J');
+            setRifNumber(rif.replace(/[^0-9]/g, ''));
+        }
+    }, [formData.rif]);
+
+    const handleRifChange = (prefix: string, number: string) => {
+        const cleanNumber = number.replace(/[^0-9]/g, '');
+        const newRifValue = cleanNumber ? `${prefix}${cleanNumber}` : '';
+        if (newRifValue !== formData.rif) {
+            handleChange({ target: { name: 'rif', value: newRifValue } } as any);
+        }
+    };
+
+    const handleRifPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').trim().toUpperCase();
+        let newPrefix = 'J';
+        let newNumber = pasteData.replace(/[^0-9]/g, '');
+
+        const firstChar = pasteData.charAt(0);
+        if (rifPrefixes.includes(firstChar)) {
+            newPrefix = firstChar;
+            newNumber = pasteData.substring(1).replace(/[^0-9]/g, '');
+        }
+        handleRifChange(newPrefix, newNumber);
+    };
+    
+    // --- COORDINATES LOGIC ---
     useEffect(() => {
         if (formData.latitude != null && formData.longitude != null) {
             setLocalCoords(`${formData.latitude}, ${formData.longitude}`);
@@ -113,7 +258,7 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
     
     const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value } = e.target;
-        setLocalCoords(value); // Update local state immediately for responsiveness.
+        setLocalCoords(value);
 
         if (value.trim() === '') {
             handleCoordinatesPaste(null, null);
@@ -134,7 +279,29 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
         <>
             <Fieldset legend="Datos de Identificación">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <InputField label="RIF" name="rif" value={formData.rif} onChange={handleChange} required pattern="^[JVEGPCjvegpc]-\d{8,9}-\d$" title="Formato: J-12345678-9" />
+                    <div>
+                        <label htmlFor="rifNumber" className="block text-sm font-medium text-ciec-text-secondary mb-1">RIF*</label>
+                        <div className="flex items-center gap-2">
+                             <select
+                                value={rifPrefix}
+                                onChange={(e) => handleRifChange(e.target.value, rifNumber)}
+                                className="bg-ciec-bg border border-ciec-border rounded-lg px-3 py-2 text-ciec-text-primary focus:ring-2 focus:ring-ciec-blue focus:outline-none"
+                            >
+                                {rifPrefixes.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                            <input
+                                id="rifNumber"
+                                name="rifNumber"
+                                value={rifNumber}
+                                onPaste={handleRifPaste}
+                                onChange={(e) => handleRifChange(rifPrefix, e.target.value)}
+                                className="w-full bg-ciec-bg border border-ciec-border rounded-lg px-3 py-2 text-ciec-text-primary focus:ring-2 focus:ring-ciec-blue focus:outline-none"
+                                placeholder="12345678"
+                                required
+                                pattern="[0-9]*"
+                            />
+                        </div>
+                    </div>
                     <InputField label="Razón Social" name="razon_social" value={formData.razon_social} onChange={handleChange} required />
                     <InputField label="Nombre Establecimiento" name="nombre_establecimiento" value={formData.nombre_establecimiento} onChange={handleChange} />
                     <InputField label="Código Empresa" name="code" value={formData.code} onChange={handleChange} required readOnly={isEditing} />
@@ -160,7 +327,10 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
                         <label className="block text-sm font-medium text-ciec-text-secondary">Teléfonos</label>
                         {telefonos.map((tel, index) => (
                             <div key={index} className="flex items-center gap-2">
-                                <input type="tel" value={tel} onChange={(e) => handleTelefonoChange(index, e.target.value)} className="w-full bg-ciec-bg border border-ciec-border rounded-lg px-3 py-2 text-ciec-text-primary focus:ring-2 focus:ring-ciec-blue focus:outline-none" />
+                                <TelefonoInput 
+                                    value={tel} 
+                                    onChange={(newVal) => handleTelefonoChange(index, newVal)} 
+                                />
                                 {telefonos.length > 1 && <button type="button" onClick={() => handleRemoveTelefono(index)} className="p-2 text-red-500 hover:bg-red-900/50 rounded-full"><Minus size={16}/></button>}
                             </div>
                         ))}
@@ -216,17 +386,17 @@ const EmpresaFormFields: React.FC<EmpresaFormFieldsProps> = ({
                     <SelectField label="División CAEV" name="div_caev_id" value={formData.div_caev_id} onChange={handleChange} options={filteredDropdowns.filteredDivCaev.map(d => ({id: d.id, name: d.descripcion_div}))} disabled={!formData.sec_caev_id} />
                     <SelectField label="Clase CAEV" name="class_caev_id" value={formData.class_caev_id} onChange={handleChange} options={filteredDropdowns.filteredClassCaev.map(c => ({id: c.id, name: c.descripcion_class}))} disabled={!formData.div_caev_id} />
                     <InputField label="Año de Fundación" name="anio_fundacion" type="number" value={formData.anio_fundacion} onChange={handleChange} />
-                     <div className="md:col-span-2 lg:col-span-3">
+                    <div className="md:col-span-2 lg:col-span-3">
                         <InputField label="Productos y Marcas" name="productos_y_marcas" value={formData.productos_y_marcas} onChange={handleChange} as="textarea" />
                     </div>
                 </div>
             </Fieldset>
-
+            
             <Fieldset legend="Capital Humano">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <InputField label="Nº de Obreros" name="obreros" type="number" value={formData.obreros} onChange={handleChange} />
-                     <InputField label="Nº de Empleados" name="empleados" type="number" value={formData.empleados} onChange={handleChange} />
-                     <InputField label="Nº de Directivos" name="directivos" type="number" value={formData.directivos} onChange={handleChange} />
+                    <InputField label="Nº de Obreros" name="obreros" type="number" value={formData.obreros} onChange={handleChange} />
+                    <InputField label="Nº de Empleados" name="empleados" type="number" value={formData.empleados} onChange={handleChange} />
+                    <InputField label="Nº de Directivos" name="directivos" type="number" value={formData.directivos} onChange={handleChange} />
                 </div>
             </Fieldset>
         </>
