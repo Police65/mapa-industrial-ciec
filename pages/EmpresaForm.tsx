@@ -1,9 +1,13 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { EstablecimientoFormData, Estado, Municipio, Parroquia, SeccionCaev, DivisionCaev, ClaseCaev, Compania, Direccion, Establecimiento, Producto, ProcesoProductivo, Institucion } from '../types';
 import Spinner from '../components/ui/Spinner';
 import EmpresaFormFields from '../components/empresa/EmpresaFormFields';
+import EmpresaDetailView from '../components/empresa/EmpresaDetailView';
+import { Edit, Save, X, RotateCcw } from 'lucide-react';
 
 // Helper to create a deep copy
 const deepCopy = (obj: any) => JSON.parse(JSON.stringify(obj));
@@ -11,7 +15,8 @@ const deepCopy = (obj: any) => JSON.parse(JSON.stringify(obj));
 const EmpresaForm: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const isEditing = true;
+
+    const [isEditing, setIsEditing] = useState(false);
 
     const [initialData, setInitialData] = useState<EstablecimientoFormData | null>(null);
     const [formData, setFormData] = useState<EstablecimientoFormData>({});
@@ -79,12 +84,12 @@ const EmpresaForm: React.FC = () => {
                         id_seccion: data.clases_caev?.divisiones_caev?.id_seccion,
                         isNewCompany: false,
                         selectedInstitutions: data.afiliaciones?.map(a => a.rif_institucion) || [],
-                        selectedProducts: data.establecimiento_productos?.map(ep => ep.productos) || [],
+                        selectedProducts: data.establecimiento_productos?.map(ep => ep.productos).filter(Boolean) as any || [],
                         selectedProcesses: data.establecimiento_procesos?.map(ep => ({...ep.procesos_productivos, ...ep})) || []
                     };
                     setFormData(flatData);
                     setInitialData(deepCopy(flatData));
-                    if (data.companias?.logo) setLogoPreview(data.companias.logo);
+                    setLogoPreview(data.companias?.logo || null);
                 }
             }
             setLoading(false);
@@ -112,6 +117,15 @@ const EmpresaForm: React.FC = () => {
         setFormData(prev => ({...prev, logo: null}));
     }
 
+    const handleCancelEdit = () => {
+        if(initialData){
+            setFormData(deepCopy(initialData));
+            setLogoPreview(initialData.logo || null);
+            setLogoFile(null);
+        }
+        setIsEditing(false);
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.razon_social || !formData.rif) {
@@ -126,8 +140,9 @@ const EmpresaForm: React.FC = () => {
             const fileName = `${formData.rif}-${Date.now()}`;
             const { data: uploadData, error: uploadError } = await supabase.storage.from('logos').upload(fileName, logoFile, { upsert: true });
             if (uploadError) { setError(`Error uploading logo: ${uploadError.message}`); setSubmitting(false); return; }
-            logoUrl = supabase.storage.from('logos').getPublicUrl(uploadData.path).data.publicUrl;
-        } else if (logoPreview === null) {
+            const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(uploadData.path);
+            logoUrl = publicUrlData.publicUrl;
+        } else if (logoPreview === null && initialData?.logo) {
             logoUrl = null;
         }
 
@@ -204,7 +219,8 @@ const EmpresaForm: React.FC = () => {
             }
             
             alert(`Establecimiento actualizado exitosamente.`);
-            navigate('/empresas');
+            setInitialData(deepCopy(formData));
+            setIsEditing(false);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -213,38 +229,72 @@ const EmpresaForm: React.FC = () => {
     };
 
     if (loading) return <div className="h-full flex items-center justify-center"><Spinner size="lg" /></div>;
+    if (error && !initialData) return <div className="h-full flex items-center justify-center text-red-500">{error}</div>;
     
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 bg-ciec-card p-6 md:p-8 rounded-xl shadow-lg">
-            
-            <EmpresaFormFields
-                isEditing={isEditing}
-                formData={formData}
-                updateFormData={handleChange}
-                logoPreview={logoPreview}
-                handleLogoChange={handleLogoChange}
-                handleClearLogo={handleClearLogo}
-                dropdowns={{
-                    estados,
-                    municipios,
-                    parroquias,
-                    secCaev,
-                    divCaev,
-                    classCaev,
-                    instituciones
-                }}
-                setExternalError={setError}
-            />
-            
-            {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md mt-4">{error}</p>}
+        <div className="bg-ciec-card p-6 md:p-8 rounded-xl shadow-lg">
+            <header className="flex justify-between items-center mb-6 pb-4 border-b border-ciec-border">
+                 <h1 className="text-2xl font-bold text-ciec-text-primary">{isEditing ? "Editando Empresa" : (formData.nombre_establecimiento || 'Detalle de la Empresa')}</h1>
+                 <div className="flex items-center space-x-4">
+                    {!isEditing && (
+                         <button onClick={() => setIsEditing(true)} className="flex items-center bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <Edit className="w-5 h-5 mr-2" /> Habilitar Edición
+                        </button>
+                    )}
+                     <button type="button" onClick={() => navigate('/empresas')} className="p-2 rounded-full text-ciec-text-secondary hover:bg-ciec-border" title="Cerrar">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            </header>
 
-            <div className="flex justify-end space-x-4 pt-4 border-t border-ciec-border">
-                <button type="button" onClick={() => navigate(-1)} className="bg-ciec-border text-ciec-text-primary font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-colors">Cancelar</button>
-                <button type="submit" disabled={submitting || loading} className="bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-6 rounded-lg disabled:bg-gray-500 transition-colors">
-                    {submitting ? <Spinner size="sm" color="border-white" /> : 'Guardar Cambios'}
-                </button>
-            </div>
-        </form>
+            {isEditing ? (
+                 <form onSubmit={handleSubmit} className="space-y-8">
+                    <EmpresaFormFields
+                        isEditing={true}
+                        formData={formData}
+                        updateFormData={handleChange}
+                        logoPreview={logoPreview}
+                        handleLogoChange={handleLogoChange}
+                        handleClearLogo={handleClearLogo}
+                        dropdowns={{
+                            estados,
+                            municipios,
+                            parroquias,
+                            secCaev,
+                            divCaev,
+                            classCaev,
+                            instituciones
+                        }}
+                        setExternalError={setError}
+                    />
+                    
+                    {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md mt-4">{error}</p>}
+
+                    <div className="flex justify-end space-x-4 pt-4 border-t border-ciec-border">
+                        <button type="button" onClick={handleCancelEdit} className="bg-ciec-border text-ciec-text-primary font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition-colors flex items-center">
+                             <RotateCcw className="w-5 h-5 mr-2" /> Descartar Cambios
+                        </button>
+                        <button type="submit" disabled={submitting || loading} className="bg-ciec-blue hover:bg-ciec-blue-hover text-white font-bold py-2 px-6 rounded-lg disabled:bg-gray-500 transition-colors flex items-center">
+                            {submitting ? <Spinner size="sm" color="border-white" /> : <><Save className="w-5 h-5 mr-2" /> Guardar Cambios</>}
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                initialData && <EmpresaDetailView
+                    data={initialData}
+                    logoPreview={logoPreview}
+                    dropdowns={{
+                        estados,
+                        municipios,
+                        parroquias,
+                        secCaev,
+                        divCaev,
+                        classCaev,
+                        instituciones
+                    }}
+                />
+            )}
+        </div>
     );
 };
 
