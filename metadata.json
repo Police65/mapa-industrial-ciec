@@ -1,6 +1,6 @@
 {
-  "name": "Mapa Industrial CIEC",
-  "description": "A modern web application for managing and visualizing industrial companies in Carabobo, Venezuela, featuring a company directory, interactive map, and statistical dashboards. Built for the Cámara de Industriales del Estado Carabobo.",
+  "name": "Copy of CIEC Industrial Map",
+  "description": "A modern web application to manage and visualize industrial companies in Carabobo, Venezuela. It includes features for company registration, location mapping, statistical analysis, and member management.",
   "requestFramePermissions": [],
   "prompt": ""
 }
