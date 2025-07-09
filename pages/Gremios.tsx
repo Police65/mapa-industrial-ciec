@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Institucion } from '../types';
 import Spinner from '../components/ui/Spinner';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Building } from 'lucide-react';
 
 const Gremios: React.FC = () => {
     const [instituciones, setInstituciones] = useState<Institucion[]>([]);
@@ -29,10 +29,12 @@ const Gremios: React.FC = () => {
         fetchGremios();
     }, []);
 
-    const handleDelete = async (rif: string) => {
-        if (window.confirm('¿Está seguro de que desea eliminar este gremio? Esta acción no se puede deshacer.')) {
-            // Note: Deleting an institution might fail if it's referenced by establishments.
-            // Proper handling would involve checking for dependencies first.
+    const handleDelete = async (e: React.MouseEvent, rif: string) => {
+        // Detiene la propagación del evento para evitar que el Link se active
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (window.confirm('¿Está seguro de que desea eliminar este gremio? Esta acción no se puede deshacer y podría fallar si hay empresas afiliadas.')) {
             const { error } = await supabase.from('instituciones').delete().eq('rif', rif);
             if (error) {
                 console.error('Error deleting institution:', error);
@@ -56,19 +58,34 @@ const Gremios: React.FC = () => {
             </div>
             <div className="space-y-3">
                 {instituciones.map(gremio => (
-                    <div key={gremio.rif} className="flex items-center justify-between bg-ciec-bg p-4 rounded-lg">
-                        <div>
-                            <span className="font-medium">{gremio.nombre}</span>
-                            <p className="text-sm text-ciec-text-secondary">{gremio.rif}</p>
+                    <Link 
+                        key={gremio.rif} 
+                        to={`/gremios/editar/${gremio.rif}`}
+                        className="flex items-center justify-between bg-ciec-bg p-4 rounded-lg hover:ring-2 hover:ring-ciec-blue transition-all duration-200 cursor-pointer"
+                    >
+                        <div className="flex items-center space-x-4 flex-grow">
+                            <div className="flex-shrink-0 w-12 h-12 bg-ciec-border rounded-lg flex items-center justify-center">
+                                {gremio.logo ? (
+                                    <img src={gremio.logo} alt="logo" className="w-full h-full object-cover rounded-lg" />
+                                ) : (
+                                    <Building className="w-6 h-6 text-ciec-text-secondary" />
+                                )}
+                            </div>
+                            <div>
+                                <span className="font-medium text-ciec-text-primary">{gremio.nombre}</span>
+                                <p className="text-sm text-ciec-text-secondary">{gremio.rif}</p>
+                            </div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            {/* Edit link can be added later if an edit form is created */}
-                            {/* <Link to={`/gremios/editar/${gremio.rif}`} className="text-ciec-text-secondary hover:text-ciec-blue"><Edit className="w-5 h-5" /></Link> */}
-                            <button onClick={() => handleDelete(gremio.rif)} className="text-ciec-text-secondary hover:text-red-500">
+                        <div className="flex-shrink-0">
+                             <button 
+                                onClick={(e) => handleDelete(e, gremio.rif)} 
+                                className="text-ciec-text-secondary hover:text-red-500 p-2 rounded-full transition-colors z-10" 
+                                title="Eliminar"
+                            >
                                 <Trash2 className="w-5 h-5" />
                             </button>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>
@@ -76,3 +93,4 @@ const Gremios: React.FC = () => {
 };
 
 export default Gremios;
+

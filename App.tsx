@@ -39,6 +39,8 @@ const AppContent: React.FC = () => {
                             <Route path="/empresas/editar/:id" element={<EmpresaForm />} />
                             <Route path="/gremios" element={<Gremios />} />
                             <Route path="/gremios/nuevo" element={<GremioForm />} />
+                            {/* Ruta añadida para la edición de gremios */}
+                            <Route path="/gremios/editar/:rif" element={<GremioForm />} />
                             <Route path="/integrantes" element={<Integrantes />} />
                             <Route path="/integrantes/nuevo" element={<IntegranteForm />} />
                             <Route path="/reportes" element={<Reportes />} />
