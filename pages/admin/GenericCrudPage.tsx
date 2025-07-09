@@ -4,7 +4,7 @@ import { GenericItem } from '../../types';
 import Spinner from '../../components/Spinner';
 import Modal from '../../components/Modal';
 import { PlusIcon } from '../../components/icons/NavIcons';
-import { CrudConfig, SelectData } from './types';
+import { CrudConfig, FormField, SelectData } from './types';
 
 interface GenericCrudPageProps {
   config: CrudConfig;
@@ -30,7 +30,7 @@ const GenericCrudPage: React.FC<GenericCrudPageProps> = ({ config }) => {
       setError(`Error al cargar ${itemName}s: ${fetchError.message}`);
       console.error(fetchError);
     } else {
-      setItems((data as unknown as GenericItem[]) || []);
+      setItems(data as GenericItem[]);
     }
     setLoading(false);
   }, [tableName, itemName, join]);
@@ -42,7 +42,7 @@ const GenericCrudPage: React.FC<GenericCrudPageProps> = ({ config }) => {
       const { tableName, key: optionKey, value: optionValue } = selects[key];
       const { data, error } = await supabase.from(tableName).select(`${optionKey}, ${optionValue}`);
       if (!error && data) {
-        allOptions[key] = data.map((d: any) => ({ id: d[optionKey], name: d[optionValue] }));
+        allOptions[key] = data.map(d => ({ id: d[optionKey], name: d[optionValue] }));
       }
     }
     setSelectOptions(allOptions);

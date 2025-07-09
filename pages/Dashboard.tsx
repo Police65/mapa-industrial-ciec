@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from '../services/supabase';
-import { DashboardStats, CompaniesByMunicipality } from '../types';
+import { DashboardStats, CompaniesByMunicipality, Company } from '../types';
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
 import { BriefcaseIcon, MapIcon, HomeIcon } from '../components/icons/NavIcons';
@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
       try {
         const { data, error: companiesError } = await supabase
           .from('empresas')
-          .select('code, empleados, obreros, directivos, afiliacion_id, municipios!inner(nombre_municipio)');
+          .select('code, empleados, obreros, directivos, afiliacion_id, municipios(nombre_municipio)');
 
         if (companiesError) throw companiesError;
         
@@ -32,7 +32,7 @@ const Dashboard: React.FC = () => {
           setStats({ totalCompanies, totalEmployees, affiliatedCompanies });
           
           const byMunicipality: { [key: string]: number } = {};
-          data.forEach((company: any) => {
+          data.forEach(company => {
             const munName = company.municipios?.nombre_municipio || 'No especificado';
             byMunicipality[munName] = (byMunicipality[munName] || 0) + 1;
           });
@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
 
       <div className="bg-white p-6 rounded-xl shadow-md">
         <h2 className="text-xl font-bold text-ciec-text mb-4">Empresas por Municipio</h2>
-        <div className="w-full h-96">
+        <div style={{ width: '100%', height: 400 }}>
           <ResponsiveContainer>
             <BarChart
               data={companiesByMun}

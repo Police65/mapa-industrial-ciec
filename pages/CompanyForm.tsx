@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Company, Estado, Municipio, Parroquia, Afiliacion, ClassCaev, Urbanizacion } from '../types';
 import Spinner from '../components/Spinner';
-import { parseCoordinateString, decimalToDMS } from '../utils/coordinates';
 
 type FormData = Partial<Company>;
 
@@ -24,7 +23,6 @@ const CompanyForm: React.FC = () => {
     const [urbanizaciones, setUrbanizaciones] = useState<Urbanizacion[]>([]);
     const [afiliaciones, setAfiliaciones] = useState<Afiliacion[]>([]);
     const [caevClasses, setCaevClasses] = useState<ClassCaev[]>([]);
-    const [coordinatesDMS, setCoordinatesDMS] = useState<string>('');
 
     const fetchDropdownData = useCallback(async () => {
         const { data: estadosData, error: e1 } = await supabase.from('estados').select('*');
@@ -51,13 +49,6 @@ const CompanyForm: React.FC = () => {
             console.error(error);
         } else {
             setFormData(data);
-            
-            // Initialize DMS coordinates if lat/lng exist
-            if (data.latitude !== null && data.longitude !== null) {
-                const latDMS = decimalToDMS(data.latitude, true);
-                const lngDMS = decimalToDMS(data.longitude, false);
-                setCoordinatesDMS(`${latDMS} ${lngDMS}`);
-            }
         }
     }, []);
 
@@ -77,45 +68,6 @@ const CompanyForm: React.FC = () => {
         const { name, value } = e.target;
         const numValue = (e.target as HTMLInputElement).type === 'number' ? (value === '' ? null : Number(value)) : value;
         setFormData(prev => ({ ...prev, [name]: numValue }));
-    };
-
-    const handleCoordinatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setCoordinatesDMS(value);
-        
-        // Parse coordinates and update form data
-        const { latitude, longitude } = parseCoordinateString(value);
-        setFormData(prev => ({
-            ...prev,
-            latitude: latitude,
-            longitude: longitude
-        }));
-    };
-
-    const handleLatitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        const numValue = value === '' ? null : Number(value);
-        setFormData(prev => ({ ...prev, latitude: numValue }));
-        
-        // Update DMS coordinates if both lat and lng are present
-        if (numValue !== null && formData.longitude !== null && formData.longitude !== undefined) {
-            const latDMS = decimalToDMS(numValue, true);
-            const lngDMS = decimalToDMS(formData.longitude, false);
-            setCoordinatesDMS(`${latDMS} ${lngDMS}`);
-        }
-    };
-
-    const handleLongitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        const numValue = value === '' ? null : Number(value);
-        setFormData(prev => ({ ...prev, longitude: numValue }));
-        
-        // Update DMS coordinates if both lat and lng are present
-        if (numValue !== null && formData.latitude !== null && formData.latitude !== undefined) {
-            const latDMS = decimalToDMS(formData.latitude, true);
-            const lngDMS = decimalToDMS(numValue, false);
-            setCoordinatesDMS(`${latDMS} ${lngDMS}`);
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -168,7 +120,7 @@ const CompanyForm: React.FC = () => {
         </div>
     );
     
-    const renderSelect = <T extends {id: string | number}>(name: keyof FormData, label: string, options: T[], optionValue: keyof T) => (
+    const renderSelect = <T extends {id: string | number}>(name: keyof FormData, label: string, options: T[], optionKey: keyof T, optionValue: keyof T) => (
         <div>
              <label htmlFor={name} className="block text-sm font-medium text-ciec-dark-gray">{label}</label>
              <select
@@ -203,53 +155,14 @@ const CompanyForm: React.FC = () => {
                 {renderInput('telefono2', 'Teléfono 2')}
                 {renderInput('direccion_fiscal', 'Dirección Fiscal')}
                 {renderInput('direccion_establecimiento', 'Dirección Establecimiento')}
-                {renderSelect('estado_id', 'Estado', estados, 'nombre_estado')}
-                {renderSelect('municipio_id', 'Municipio', municipios.filter(m => m.estado_id === Number(formData.estado_id)), 'nombre_municipio')}
-                {renderSelect('parroquia_id', 'Parroquia', parroquias.filter(p => p.municipio_id === Number(formData.municipio_id)), 'nombre_parroquia')}
-                {renderSelect('urbanizacion_id', 'Urbanización', urbanizaciones.filter(u => u.parroquia_id === Number(formData.parroquia_id)), 'nombre_urbanizacion')}
-                <div className="md:col-span-2">
-                    <label htmlFor="coordinates" className="block text-sm font-medium text-ciec-dark-gray">
-                        Coordenadas (Formato: 10°09'52.8"N 67°57'49.9"W)
-                    </label>
-                    <input
-                        type="text"
-                        id="coordinates"
-                        name="coordinates"
-                        value={coordinatesDMS}
-                        onChange={handleCoordinatesChange}
-                        placeholder="10°09'52.8N 67°57'49.9W"
-                        className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ciec-blue focus:border-ciec-blue sm:text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                        Formato: Grados°Minutos'Segundos"Dirección
-                    </p>
-                </div>
-                <div>
-                    <label htmlFor="latitude" className="block text-sm font-medium text-ciec-dark-gray">Latitud (Decimal)</label>
-                    <input
-                        type="number"
-                        id="latitude"
-                        name="latitude"
-                        value={(formData.latitude as number) || ''}
-                        onChange={handleLatitudeChange}
-                        step="any"
-                        className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ciec-blue focus:border-ciec-blue sm:text-sm"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="longitude" className="block text-sm font-medium text-ciec-dark-gray">Longitud (Decimal)</label>
-                    <input
-                        type="number"
-                        id="longitude"
-                        name="longitude"
-                        value={(formData.longitude as number) || ''}
-                        onChange={handleLongitudeChange}
-                        step="any"
-                        className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-ciec-blue focus:border-ciec-blue sm:text-sm"
-                    />
-                </div>
-                {renderSelect('afiliacion_id', 'Afiliada a', afiliaciones, 'nombre_afiliacion')}
-                {renderSelect('class_caev_id', 'Clasificación CAEV', caevClasses, 'descripcion_class')}
+                {renderSelect('estado_id', 'Estado', estados, 'id', 'nombre_estado')}
+                {renderSelect('municipio_id', 'Municipio', municipios.filter(m => m.estado_id === Number(formData.estado_id)), 'id', 'nombre_municipio')}
+                {renderSelect('parroquia_id', 'Parroquia', parroquias.filter(p => p.municipio_id === Number(formData.municipio_id)), 'id', 'nombre_parroquia')}
+                {renderSelect('urbanizacion_id', 'Urbanización', urbanizaciones.filter(u => u.parroquia_id === Number(formData.parroquia_id)), 'id', 'nombre_urbanizacion')}
+                {renderInput('latitude', 'Latitud', 'number')}
+                {renderInput('longitude', 'Longitud', 'number')}
+                {renderSelect('afiliacion_id', 'Afiliada a', afiliaciones, 'id', 'nombre_afiliacion')}
+                {renderSelect('class_caev_id', 'Clasificación CAEV', caevClasses, 'id', 'descripcion_class')}
                 {renderInput('productos_y_marcas', 'Productos y Marcas')}
                 {renderInput('obreros', 'Nº de Obreros', 'number')}
                 {renderInput('empleados', 'Nº de Empleados', 'number')}
