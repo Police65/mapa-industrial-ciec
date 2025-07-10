@@ -8,6 +8,7 @@ import Empresas from './pages/Empresas';
 import Gremios from './pages/Gremios';
 import Graficos from './pages/Graficos';
 import Reportes from './pages/Reportes';
+import Auditoria from './pages/Auditoria';
 import Integrantes from './pages/Integrantes';
 import EmpresaForm from './pages/EmpresaForm';
 import GremioForm from './pages/GremioForm';
@@ -45,6 +46,7 @@ const AppContent: React.FC = () => {
                             {/* Ruta añadida para la edición de integrantes */}
                             <Route path="/integrantes/editar/:id" element={<IntegranteForm />} />
                             <Route path="/reportes" element={<Reportes />} />
+                            <Route path="/auditoria" element={<Auditoria />} />
                             <Route path="/graficos" element={<Graficos />} />
                             {/* Add other routes for settings, info, etc. */}
                         </Routes>

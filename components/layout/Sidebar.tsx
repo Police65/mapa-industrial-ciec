@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Map, Building2, Share2, Users, FileText, PieChart, Info, MessageSquare, Settings, ChevronLeft } from 'lucide-react';
+import { Map, Building2, Share2, Users, FileText, PieChart, Info, MessageSquare, Settings, ClipboardCheck } from 'lucide-react';
 import { Page } from '../../types';
 
 interface SidebarProps {
@@ -14,6 +13,7 @@ const navItems = [
     { to: '/gremios', icon: Share2, label: 'Gremios' as Page },
     { to: '/integrantes', icon: Users, label: 'Integrantes' as Page },
     { to: '/reportes', icon: FileText, label: 'Reportes' as Page },
+    { to: '/auditoria', icon: ClipboardCheck, label: 'Auditoría' as Page },
     { to: '/graficos', icon: PieChart, label: 'Gráficos' as Page },
     { to: '/info', icon: Info, label: 'Información' as Page },
     { to: '/chat', icon: MessageSquare, label: 'Chat' as Page },

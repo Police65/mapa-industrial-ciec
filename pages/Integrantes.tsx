@@ -204,4 +204,3 @@ const Integrantes: React.FC = () => {
 };
 
 export default Integrantes;
-

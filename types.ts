@@ -217,6 +217,20 @@ export interface Database {
           ano_fundacion?: string | null
         }
       }
+      institucion_servicios: {
+        Row: {
+          rif_institucion: string
+          id_servicio: number
+        }
+        Insert: {
+          rif_institucion: string
+          id_servicio: number
+        }
+        Update: {
+          rif_institucion?: string
+          id_servicio?: number
+        }
+      }
       integrantes: {
         Row: {
           id_integrante: number
@@ -343,6 +357,7 @@ export type IntegranteInsert = Database['public']['Tables']['integrantes']['Inse
 
 export type Producto = Database['public']['Tables']['productos']['Row'];
 export type ProcesoProductivo = Database['public']['Tables']['procesos_productivos']['Row'];
+export type Servicio = Database['public']['Tables']['servicios']['Row'];
 export type EstablecimientoProducto = Database['public']['Tables']['establecimiento_productos']['Row'];
 export type EstablecimientoProceso = Database['public']['Tables']['establecimiento_procesos']['Row'];
 
@@ -367,7 +382,7 @@ export type EstablecimientoFull = Establecimiento & {
   establecimiento_procesos: (EstablecimientoProceso & { procesos_productivos: ProcesoProductivo })[];
 };
 
-export type Page = 'Mapa' | 'Empresas' | 'Gremios' | 'Integrantes' | 'Reportes' | 'Gráficos' | 'Información' | 'Chat' | 'Configuración';
+export type Page = 'Mapa' | 'Empresas' | 'Gremios' | 'Integrantes' | 'Reportes' | 'Auditoría' | 'Gráficos' | 'Información' | 'Chat' | 'Configuración';
 
 // Draft Context Types - a flat structure for easier state management
 export type EstablecimientoFormData = Partial<

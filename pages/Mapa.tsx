@@ -183,7 +183,7 @@ const Mapa: React.FC = () => {
                         position={{ lat: selectedPin.lat, lng: selectedPin.lng }}
                         onCloseClick={handleInfoWindowClose}
                         options={{
-                            pixelOffset: new window.google.maps.Size(0, -38) // Ajusta la posición del InfoWindow sobre el pin
+                            pixelOffset: new (window as any).google.maps.Size(0, -38) // Ajusta la posición del InfoWindow sobre el pin
                         }}
                     >
                         <div className="p-3 bg-ciec-card text-ciec-text-primary rounded-lg shadow-xl max-w-xs border border-white/20 space-y-2">
